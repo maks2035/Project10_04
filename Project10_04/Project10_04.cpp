@@ -96,24 +96,33 @@ int main(int argc, char** argv) {
 
    std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
    std::chrono::nanoseconds duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
-   int total_duration;
-   MPI_Reduce(&duration, &total_duration, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD); // Суммирование времени выполнения всех процессов
 
-   if (rank == 0) {
-      std::cout << "--------------------------------------------------------------------------" << std::endl;
-      std::cout << total_duration << std::endl;
-      std::cout << "--------------------------------------------------------------------------" << std::endl;
-   }
+   std::cout << "--------------------------------------------------------------------------" << std::endl;
+   std::cout << duration.count() << std::endl;
+   std::cout << "--------------------------------------------------------------------------" << std::endl;
 
    cap.release();
 
    if (rank == 0) {
+      
+      cv::VideoWriter video("D:/virandfpc/fpc/Project10_04/output.mp4", cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 30, cv::Size(480, 360));
+      if (!video.isOpened()) {
+         std::cout << "Error: could not open video writer" << std::endl;
+         return -1;
+      }
+
       for (int i = 0; i < frames.size(); i++) {
          cv::imshow("faces detected", frames[i]);
+         cv::Mat buff = frames[i].clone();
+         cv::resize(buff, buff, cv::Size(480, 360));
+         video << buff;
+
          char c = (char)cv::waitKey(30);
          if (c == 27) break;
       }
       cv::destroyAllWindows();
+
+      video.release();
    }
 
    MPI_Finalize();
